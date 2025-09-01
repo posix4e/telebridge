@@ -1,0 +1,24 @@
+# Rendered by scripts/render-config.sh from env vars.
+
+homeserver:
+  address: "__HOMESERVER_ADDRESS__"
+  domain: "__MATRIX_DOMAIN__"
+
+appservice:
+  port: 29317
+  address: "__APPSERVICE_ADDRESS__"
+  hs_token: "__HS_TOKEN__"
+  as_token: "__AS_TOKEN__"
+  bot_username: "__BOT_USERNAME__"
+
+bridge:
+  permissions:
+    "@admin:__MATRIX_DOMAIN__": admin
+
+database:
+  type: sqlite
+  uri: file:/data/mautrix-telegram.db
+
+logging:
+  level: INFO
+

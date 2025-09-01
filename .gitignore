@@ -1,0 +1,14 @@
+# Umbrel app data
+apps/**/data/
+apps/**/data/**/*
+
+# Editors
+.DS_Store
+.idea/
+.vscode/
+
+# Node / build caches (if added later)
+node_modules/
+dist/
+build/
+

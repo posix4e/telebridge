@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  bridge:
+    image: dock.mau.fi/mautrix/telegram:latest
+    container_name: telegram-bridge
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+      - ./templates:/opt/telegram-bridge/templates:ro
+      - ./scripts:/opt/telegram-bridge/scripts:ro
+    environment:
+      - TZ=${TZ:-UTC}
+      # Optional env-driven config
+      - HOMESERVER_ADDRESS=${HOMESERVER_ADDRESS:-}
+      - MATRIX_DOMAIN=${MATRIX_DOMAIN:-}
+      - APPSERVICE_ADDRESS=${APPSERVICE_ADDRESS:-}
+      - HS_TOKEN=${HS_TOKEN:-}
+      - AS_TOKEN=${AS_TOKEN:-}
+      - BOT_USERNAME=${BOT_USERNAME:-telegrambot}
+      - RENDER_CONFIG=${RENDER_CONFIG:-}
+      - ALLOW_EMPTY=${ALLOW_EMPTY:-0}
+      - BACKUP_CONFIG=${BACKUP_CONFIG:-1}
+      - GENERATE_REGISTRATION=${GENERATE_REGISTRATION:-0}
+    # Expose the appservice listener so Synapse can reach it
+    ports:
+      - "${HOST_BIND_IP:-0.0.0.0}:29317:29317"
+    command: >
+      sh -c "sh /opt/telegram-bridge/scripts/render-config.sh || true;
+      if [ \"${GENERATE_REGISTRATION:-0}\" = \"1\" ] && [ ! -f /data/registration.yaml ]; then
+        mautrix-telegram -g -c /data/config.yaml -r /data/registration.yaml || true;
+      fi;
+      mautrix-telegram -c /data/config.yaml"
+
+  # Minimal static page so Umbrel can proxy a UI route
+  ui:
+    build: ./ui
+    container_name: telegram-bridge-ui
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=${TZ:-UTC}
+      - DEFAULT_APPSERVICE_HOST=${DEFAULT_APPSERVICE_HOST:-}
+    expose:
+      - "80"
+
+networks:
+  default:
+    name: telegram-bridge

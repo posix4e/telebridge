@@ -1,0 +1,26 @@
+id: telegram-bridge
+name: Telegram Bridge (mautrix-telegram)
+version: "0.1.0"
+category: social
+tagline: Bridge Telegram with your Matrix homeserver
+description: |
+  A Matrix↔Telegram appservice bridge powered by mautrix-telegram. This app runs
+  headless and exposes the appservice listener so your Synapse homeserver can connect.
+  See the app’s README for integration steps and caveats on Umbrel.
+developer: Matrix.org community / mautrix
+website: https://github.com/mautrix/telegram
+repo: https://github.com/mautrix/telegram
+support: https://github.com/mautrix/telegram/issues
+dependencies:
+  - synapse
+  - element
+port: 80
+path: /
+gallery:
+  - ./assets/screenshot-1.png
+  - ./assets/screenshot-2.png
+releaseNotes: |
+  Initial preview. Runs mautrix-telegram and exposes its appservice port (29317).
+  You must link it to Synapse manually per docs.
+defaultPassword: false
+
