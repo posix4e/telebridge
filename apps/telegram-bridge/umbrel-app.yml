@@ -1,6 +1,6 @@
 id: telegram-bridge
 name: Telegram Bridge (mautrix-telegram)
-version: "0.1.0"
+version: "0.1.1"
 category: social
 tagline: Bridge Telegram with your Matrix homeserver
 description: |
@@ -12,15 +12,17 @@ website: https://github.com/mautrix/telegram
 repo: https://github.com/mautrix/telegram
 support: https://github.com/mautrix/telegram/issues
 dependencies:
-  - synapse
-  - element
+  # Hint-only in current Umbrel; remove for broader compatibility
+  # Add exact IDs once confirmed in your store
+  # - synapse
+  # - element
 port: 80
 path: /
 gallery:
   - ./assets/screenshot-1.png
   - ./assets/screenshot-2.png
+icon: ./assets/icon.svg
 releaseNotes: |
   Initial preview. Runs mautrix-telegram and exposes its appservice port (29317).
   You must link it to Synapse manually per docs.
 defaultPassword: false
-

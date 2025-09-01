@@ -2,7 +2,6 @@ import express from 'express'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import YAML from 'yaml'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -17,14 +16,34 @@ const DEFAULT_APPSERVICE_HOST = process.env.DEFAULT_APPSERVICE_HOST || ''
 // Static UI
 app.use(express.static(path.join(__dirname, 'public')))
 
+function readConfigRaw() {
+  if (!fs.existsSync(CONFIG_PATH)) return ''
+  try { return fs.readFileSync(CONFIG_PATH, 'utf8') } catch { return '' }
+}
+
+function extract(val, section, key) {
+  // Very naive extractor for our own generated YAML structure
+  const secRe = new RegExp(`^${section}:\n([\s\S]*?)(\n[^\s]|$)`, 'm')
+  const sec = (val.match(secRe) || [])[1] || ''
+  const keyRe = new RegExp(`^\s+${key}:\s*"?([^"\n]+)"?\s*$`, 'm')
+  const m = sec.match(keyRe)
+  return m ? m[1] : ''
+}
+
 function readConfig() {
-  if (!fs.existsSync(CONFIG_PATH)) return null
-  try {
-    const text = fs.readFileSync(CONFIG_PATH, 'utf8')
-    const doc = YAML.parse(text)
-    return doc
-  } catch (e) {
-    return null
+  const raw = readConfigRaw()
+  if (!raw) return null
+  return {
+    homeserver: {
+      address: extract(raw, 'homeserver', 'address'),
+      domain: extract(raw, 'homeserver', 'domain'),
+    },
+    appservice: {
+      address: extract(raw, 'appservice', 'address'),
+      hs_token: extract(raw, 'appservice', 'hs_token'),
+      as_token: extract(raw, 'appservice', 'as_token'),
+      bot_username: extract(raw, 'appservice', 'bot_username') || 'telegrambot',
+    },
   }
 }
 
@@ -35,32 +54,12 @@ function extractFields(cfg) {
     appserviceAddress: cfg?.appservice?.address || '',
     hsToken: cfg?.appservice?.hs_token || '',
     asToken: cfg?.appservice?.as_token || '',
-    botUsername: cfg?.appservice?.bot_username || 'telegrambot'
+    botUsername: cfg?.appservice?.bot_username || 'telegrambot',
   }
 }
 
 function writeConfig(fields) {
-  const cfg = {
-    homeserver: {
-      address: fields.homeserverAddress,
-      domain: fields.matrixDomain
-    },
-    appservice: {
-      port: 29317,
-      address: fields.appserviceAddress,
-      hs_token: fields.hsToken,
-      as_token: fields.asToken,
-      bot_username: fields.botUsername || 'telegrambot'
-    },
-    bridge: {
-      permissions: {
-        [`@admin:${fields.matrixDomain}`]: 'admin'
-      }
-    },
-    database: { type: 'sqlite', uri: 'file:/data/mautrix-telegram.db' },
-    logging: { level: 'INFO' }
-  }
-  const out = YAML.stringify(cfg)
+  const out = `homeserver:\n  address: "${fields.homeserverAddress}"\n  domain: "${fields.matrixDomain}"\n\nappservice:\n  port: 29317\n  address: "${fields.appserviceAddress}"\n  hs_token: "${fields.hsToken}"\n  as_token: "${fields.asToken}"\n  bot_username: "${fields.botUsername || 'telegrambot'}"\n\nbridge:\n  permissions:\n    "@admin:${fields.matrixDomain}": admin\n\ndatabase:\n  type: sqlite\n  uri: file:/data/mautrix-telegram.db\n\nlogging:\n  level: INFO\n`
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true })
   if (fs.existsSync(CONFIG_PATH)) {
     fs.copyFileSync(CONFIG_PATH, path.join(DATA_DIR, `config.yaml.bak.${Date.now()}`))

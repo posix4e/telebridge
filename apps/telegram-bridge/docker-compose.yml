@@ -1,6 +1,15 @@
 version: "3.8"
 
 services:
+  app_proxy:
+    image: getumbrel/umbrel-app-store:app-proxy
+    restart: unless-stopped
+    environment:
+      APP_HOST: telegram-bridge-ui
+      APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/api/health"
+    depends_on:
+      - ui
   bridge:
     image: dock.mau.fi/mautrix/telegram:latest
     container_name: telegram-bridge
@@ -34,14 +43,17 @@ services:
 
   # Minimal static page so Umbrel can proxy a UI route
   ui:
-    build: ./ui
+    image: node:18-alpine
     container_name: telegram-bridge-ui
     restart: unless-stopped
     volumes:
+      - ./ui:/app:ro
       - ./data:/data
     environment:
       - TZ=${TZ:-UTC}
       - DEFAULT_APPSERVICE_HOST=${DEFAULT_APPSERVICE_HOST:-}
+    working_dir: /app
+    command: ["node", "server.js"]
     expose:
       - "80"
 
